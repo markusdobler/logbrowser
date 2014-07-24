@@ -22,7 +22,6 @@ def index():
 @bp.route("/<handle>")
 @bp.route("/<handle>/raw", defaults={'use_default_filters': False})
 def log_view(handle, use_default_filters=True):
-    flash(request.args)
     log = models.logs[handle]
     filters = request.args.copy()
     if use_default_filters:
