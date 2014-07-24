@@ -15,24 +15,25 @@ bp = Blueprint('logbrowser', __name__, template_folder='templates',
 bp.before_app_first_request(models.init)
 blueprints = [bp]
 
-LogLine = namedtuple("LogLine", "ip timestamp ")
-
 @bp.route("/")
 def index():
     return render_template("logbrowser/index.html")
 
 @bp.route("/<handle>")
-def log_view(handle, filters=()):
+@bp.route("/<handle>/raw", defaults={'use_default_filters': False})
+def log_view(handle, use_default_filters=True):
     flash(request.args)
-    filters = models.logs[handle].default_filters + tuple(filters)
-    flash(filters)
-    return log_view_raw(handle, filters)
-
-@bp.route("/<handle>/raw")
-def log_view_raw(handle, filters=()):
     log = models.logs[handle]
+    filters = request.args.copy()
+    if use_default_filters:
+        for k,v in log.default_filters:
+            filters.add(k, v)
     entries = log.entries(filters)
     return render_template("logbrowser/log_view.html", entries=entries, handle=handle)
+
+@bp.route("/<handle>/raw")
+def log_view_raw(handle):
+    return log_view(handle, use_default_filters=False)
 
 @bp.route("/<handle>/refresh")
 def refresh_log(handle):
