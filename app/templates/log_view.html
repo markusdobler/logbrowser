@@ -1,0 +1,28 @@
+{% extends "index.html" %}
+{% block title %}{% endblock %}
+{% block content %}
+<table class="table table-plain">
+    {% for entry in entries %}
+    <tr style="color: hsl({{entry['agent'].__hash__()%359}}, {{50+entry['host'].__hash__()%50}}%, 50%);">
+        <td class="td-time">{{entry['timestamp']}}</td>
+        <td class="td-host" title="{{entry['agent']}}" data-toggle="tooltip">{{entry['host']}}</td>
+        {% with tooltip="%s:%s - %s" % (entry['method'], entry['status'], entry['referer']) %}
+        <td class="td-uri" title="{{tooltip}}" data-toggle="tooltip">{{entry['requesturi']}}</td>
+        {% endwith %}
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
+
+{% block bottom_extra %}
+<script>
+$(document).ready(function() {
+    $('td.td-host').tooltip({'placement': 'auto right', 'container': 'body'})
+    $('td.td-uri').tooltip({'placement': 'auto left', 'container': 'body'})
+});
+</script>
+{% endblock %}
+
+{% block navbar_extra %}
+<li><a href="{{url_for('.refresh_log', handle=handle)}}">Refresh</a></li>
+{% endblock %}
