@@ -30,14 +30,17 @@ class Log(object):
         entry['timestamp'] = datetime.strftime(entry['time'], '%Y-%m-%d %H:%M:%S')
         return entry
 
-    default_filters = (
-        ('-requesturi', '^/static/(css|img|js)/'),
-        ('-requesturi', '^/favicon.ico$'),
-        ('time', '5 days'),
-    )
+    default_filters = {
+        '-requesturi': (
+            '^/static/(css|img|js)/',
+            '^/favicon.ico$',
+        ),
+        'time': '5 days',
+    }
     def entries(self, filters):
-        log_entries = self.entries_filtered_by_time(filters.poplist('time'),
-                                                    filters.poplist('-time'))
+        log_entries = self.entries_filtered_by_time(
+                                        filters.pop('time', '9999 days'),
+                                        filters.pop('-time', '0 seconds'))
         for field, pattern in filters.iteritems(multi=True):
             pattern = re.compile(pattern)
             if field.startswith('-'):
@@ -48,18 +51,16 @@ class Log(object):
             log_entries = [e for e in log_entries if test(e[field])]
         return log_entries
 
-    def entries_filtered_by_time(self, not_before_patterns, not_after_patterns):
+    def entries_filtered_by_time(self, not_before_pattern, not_after_pattern):
         log_entries = self.log_entries
         now = datetime.now()
-        def to_datetime_delta(pattern):
-            value, unit = pattern.split()
-            return timedelta(**{str(unit): int(value)})
-        if not_before_patterns:
-            not_before = now - max(to_datetime_delta(p) for p in not_before_patterns)
-            log_entries = [e for e in log_entries if e['time'] > not_before]
-        if not_after_patterns:
-            not_after = now - min(to_datetime_delta(p) for p in not_after_patterns)
-            log_entries = [e for e in log_entries if not_after > e['time']]
+        def to_threshold_datetime(delta_pattern):
+            value, unit = delta_pattern.split()
+            return now - timedelta(**{str(unit): int(value)})
+        not_before = to_threshold_datetime(not_before_pattern)
+        not_after = to_threshold_datetime(not_after_pattern)
+        log_entries = [e for e in log_entries
+                       if not_before < e['time'] < not_after]
         return log_entries
 
 
