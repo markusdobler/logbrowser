@@ -55,7 +55,7 @@ class Log(object):
         log_entries = self.log_entries
         now = datetime.now()
         def to_threshold_datetime(delta_pattern):
-            value, unit = delta_pattern.split()
+            value, unit = re.match('^(\d+)\s*(\S+)$', delta_pattern).groups()
             return now - timedelta(**{str(unit): int(value)})
         not_before = to_threshold_datetime(not_before_pattern)
         not_after = to_threshold_datetime(not_after_pattern)
