@@ -25,14 +25,14 @@ def log_view(handle, use_default_filters=True):
     log = models.logs[handle]
     filters = request.args.copy()
     if use_default_filters:
-        for k,v in log.default_filters:
-            filters.add(k, v)
+        for k,val in log.default_filters.items():
+            if isinstance(val, (str, unicode)):
+                filters.add(k, val)
+            else:
+                for v in val:
+                    filters.add(k, v)
     entries = log.entries(filters)
     return render_template("logbrowser/log_view.html", entries=entries, handle=handle)
-
-@bp.route("/<handle>/raw")
-def log_view_raw(handle):
-    return log_view(handle, use_default_filters=False)
 
 @bp.route("/<handle>/refresh")
 def refresh_log(handle):
